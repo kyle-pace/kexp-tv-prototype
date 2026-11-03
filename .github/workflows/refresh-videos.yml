@@ -1,0 +1,24 @@
+# Keeps videos.json (KEXP's latest YouTube uploads) fresh for the prototype's Watch tab.
+name: Refresh KEXP videos
+on:
+  schedule:
+    - cron: "17 */3 * * *"   # every 3 hours
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: refresh-videos
+  cancel-in-progress: true
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch KEXP's YouTube feed
+        run: python3 .github/scripts/videos.py videos.json
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add videos.json
+          git diff --cached --quiet || (git commit -m "Refresh KEXP videos" && git push)
